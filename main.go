@@ -23,6 +23,9 @@ func main() {
 	}
 
 	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		log.Fatalf("error opening database: %v", err)
+	}
 	dbQueries := database.New(db)
 
 	programState := &state{
@@ -31,14 +34,12 @@ func main() {
 	}
 
 
-
- 
-
 	cmds := commands{
 		registeredCommands: make(map[string]func(*state, command) error),
 	}
 	cmds.register("login", handlerLogin)
 	cmds.register("register", registerHandler)
+	cmds.register("reset", deleteUsers)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")

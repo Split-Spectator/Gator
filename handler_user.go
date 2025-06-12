@@ -65,3 +65,19 @@ func registerHandler(s *state, cmd command) error {
 
 	return nil
 }
+
+
+func deleteUsers(s *state, cmd command) error {
+
+	ctx := context.Background()
+	
+	err := s.db.DeleteUsers(ctx)
+	if err != nil {
+		fmt.Println("Failed to remove users")
+		os.Exit(1)
+	}
+
+	fmt.Println("Users removed")
+
+	return nil
+}
