@@ -70,7 +70,7 @@ func registerHandler(s *state, cmd command) error {
 func deleteUsers(s *state, cmd command) error {
 
 	ctx := context.Background()
-	
+
 	err := s.db.DeleteUsers(ctx)
 	if err != nil {
 		fmt.Println("Failed to remove users")
@@ -78,6 +78,28 @@ func deleteUsers(s *state, cmd command) error {
 	}
 
 	fmt.Println("Users removed")
+
+	return nil
+}
+
+
+func handlerUsers(s *state, cmd command) error {
+	ctx := context.Background()
+	//fmt.Printf("Current user from config: '%s'\n", s.cfg.CurrentUserName)
+	a, err := s.db.GetUsers(ctx)
+	if err != nil {
+		fmt.Println("Failed to retrieve users")
+		os.Exit(1)
+	}
+	for _, a := range a {
+		fmt.Printf("* %s", a)
+
+		if a == s.cfg.CurrentUserName {
+			fmt.Print(" (current)")
+		}
+
+		fmt.Print("\n")
+	}
 
 	return nil
 }
