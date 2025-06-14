@@ -8,12 +8,9 @@ import (
 	"Gator/internal/database"
 )
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
 	ctx := context.Background()
-	user, err := s.db.GetUser(ctx, s.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
+	
 
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: %s <feed_url>", cmd.Name)
@@ -39,6 +36,29 @@ func handlerFollow(s *state, cmd command) error {
 	printFeedFollow(ffRow.UserName, ffRow.FeedName) //this line causing error
 	return nil
 }
+
+func handlerListFeedFollows(s *state, cmd command, user database.User) error {
+	ctx := context.Background()
+	
+
+	feedFollows, err := s.db.GetFeedFollowsForUser(ctx, user.ID)
+	if err != nil {
+		return fmt.Errorf("couldn't get feed follows: %w", err)
+	}
+
+	if len(feedFollows) == 0 {
+		fmt.Println("No feed follows found for this user.")
+		return nil
+	}
+
+	fmt.Printf("Feed follows for user %s:\n", user.Name)
+	for _, ff := range feedFollows {
+		fmt.Printf("* %s\n", ff.FeedName)
+	}
+
+	return nil
+}
+
 
 func printFeedFollow(username, feedname string) {
 	fmt.Printf("* User:          %s\n", username)

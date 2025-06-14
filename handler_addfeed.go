@@ -11,7 +11,7 @@ import (
 	"Gator/internal/database"
 )
 
-func handlerAddfeed(s *state, cmd command ) error {
+func handlerAddfeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) < 2 {
 		log.Fatal("usage: Gator addfeed NAME URL")
 	}
@@ -20,19 +20,13 @@ func handlerAddfeed(s *state, cmd command ) error {
 	name := cmd.Args[0]
 	url := cmd.Args[1]
 
-	user, err := s.db.GetUser(ctx, s.cfg.CurrentUserName)
-	if err != nil {
-		fmt.Print("Failed to get current user from DB")
-		os.Exit(1)
-	}
-
-	_, err = fetchFeed(ctx, url)
+	_, err := fetchFeed(ctx, url)
 	if err != nil {
 		fmt.Printf("Failed to fetch feed: %v\n", err)
 		os.Exit(1)
 	}
 
-	f, err := s.db.CreateFeed(ctx, database.CreateFeedParams{
+	feed, err := s.db.CreateFeed(ctx, database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},
@@ -43,20 +37,32 @@ func handlerAddfeed(s *state, cmd command ) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Feed created successfully:")
-	printFeed(f)
-	fmt.Println()
-	fmt.Println("=====================================")
+	feedFollow, err := s.db.CreateFeedFollow(ctx, database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("couldn't create feed follow: %w", err)
+	}
 
+	fmt.Println("Feed created successfully:")
+	printFeed(feed, user)
+	fmt.Println()
+	fmt.Println("Feed followed successfully:")
+	printFeedFollow(feedFollow.UserName, feedFollow.FeedName)
+	fmt.Println("=====================================")
 	
 
 	return nil
 }
-func printFeed(feed database.Feed) {
+func printFeed(feed database.Feed, user database.User) {
 	fmt.Printf("* ID:            %s\n", feed.ID)
 	fmt.Printf("* Created:       %v\n", feed.CreatedAt)
 	fmt.Printf("* Updated:       %v\n", feed.UpdatedAt)
 	fmt.Printf("* Name:          %s\n", feed.Name)
 	fmt.Printf("* URL:           %s\n", feed.Url)
-	fmt.Printf("* UserID:        %s\n", feed.UserID)
+	fmt.Printf("* User:          %s\n", user.Name)
 }
